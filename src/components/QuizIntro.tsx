@@ -8,12 +8,12 @@ interface QuizIntroProps {
 export const QuizIntro = ({ onStart }: QuizIntroProps) => {
   return (
     <div className="text-center space-y-8 animate-fade-in">
-      <div className="flex items-center justify-center mb-8">
-        <div className="relative">
-          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-          <BarChart3 className="w-20 h-20 text-primary relative z-10" />
-        </div>
-      </div>
+      <img 
+        src="https://i.ibb.co/vxTPQdHL/Group-427318301.png" 
+        alt="Logo More Analytics" 
+        style={{ maxWidth: '250px', margin: '0 auto 30px auto', display: 'block' }}
+        className="mb-8"
+      />
       
       <div className="max-w-2xl mx-auto space-y-4">
         <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
@@ -69,3 +69,5 @@ export const QuizIntro = ({ onStart }: QuizIntroProps) => {
     </div>
   );
 };
+
+

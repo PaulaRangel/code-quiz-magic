@@ -7,6 +7,7 @@ import { QuizForm } from "@/components/QuizForm";
 import { QuizHeader } from "@/components/QuizHeader";
 import { QuizProgress } from "@/components/QuizProgress";
 import { QuizNavigation } from "@/components/QuizNavigation";
+import { QuizCompletion } from "@/components/QuizCompletion"; // Importar o novo componente
 import { useToast } from "@/hooks/use-toast";
 
 interface FormData {
@@ -20,11 +21,12 @@ const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [formData, setFormData] = useState<FormData>({
-    nome: '',
-    email: '',
-    empresa: '',
-    cargo: ''
+    nome: "",
+    email: "",
+    empresa: "",
+    cargo: ""
   });
+  const [isQuizCompleted, setIsQuizCompleted] = useState(false); // Novo estado para controlar a conclusão
   const { toast } = useToast();
 
   const totalSlides = quizData.questions.length + 2;
@@ -58,17 +60,17 @@ const Index = () => {
   const handleSubmit = async () => {
     // Validação dos dados antes de enviar
     const schema = z.object({
-      nome: z.string().trim().min(1, { message: 'Nome é obrigatório' }).max(120),
-      email: z.string().trim().email({ message: 'E-mail inválido' }).max(255),
-      empresa: z.string().trim().min(1, { message: 'Empresa é obrigatória' }).max(200),
+      nome: z.string().trim().min(1, { message: "Nome é obrigatório" }).max(120),
+      email: z.string().trim().email({ message: "E-mail inválido" }).max(255),
+      empresa: z.string().trim().min(1, { message: "Empresa é obrigatória" }).max(200),
       cargo: z.string().trim().max(200).optional(),
     });
 
     const validation = schema.safeParse(formData);
 
     if (!validation.success) {
-      const firstError = validation.error.issues[0]?.message ?? 'Dados inválidos';
-      toast({ title: 'Verifique os dados', description: firstError, variant: 'destructive' });
+      const firstError = validation.error.issues[0]?.message ?? "Dados inválidos";
+      toast({ title: "Verifique os dados", description: firstError, variant: "destructive" });
       return;
     }
 
@@ -76,16 +78,16 @@ const Index = () => {
     const missing = requiredQuestions.filter((q) => !answers[q]);
     if (missing.length > 0) {
       toast({
-        title: 'Responda todas as perguntas',
+        title: "Responda todas as perguntas",
         description: `Falta responder a pergunta ${missing[0]}.`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
 
     const dadosParaEnvio = {
       ...formData,
-      origem: 'Site',
+      origem: "Site",
       pergunta_1: answers[1],
       pergunta_2: answers[2],
       pergunta_3: answers[3],
@@ -93,37 +95,38 @@ const Index = () => {
       pergunta_5: answers[5],
     };
 
-    const webhookUrl = 'https://webhook.automacao.rangelpower.com/webhook/quiz-more-analytics';
+    const webhookUrl = "https://automacao.rangelpower.com/webhook/quiz-more-analytics";
 
     try {
       const response = await fetch(webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(dadosParaEnvio)
       });
 
       if (response.ok) {
         toast({
-          title: 'Quiz enviado com sucesso!',
-          description: 'Você receberá seu diagnóstico por e-mail em breve.',
+          title: "Quiz enviado com sucesso!",
+          description: "Você receberá seu diagnóstico por e-mail em breve.",
         });
+        setIsQuizCompleted(true); // Definir como concluído após o envio bem-sucedido
       } else {
-        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-        console.error('Erro na resposta do webhook:', response.status, errorData);
+        const errorData = await response.json().catch(() => ({ message: "Erro desconhecido" }));
+        console.error("Erro na resposta do webhook:", response.status, errorData);
         toast({
-          title: 'Erro ao enviar o quiz',
+          title: "Erro ao enviar o quiz",
           description: `Ocorreu um problema no servidor: ${errorData.message || response.statusText}.`, 
-          variant: 'destructive',
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Erro de rede ao tentar enviar para o webhook:', error);
+      console.error("Erro de rede ao tentar enviar para o webhook:", error);
       toast({
-        title: 'Erro de conexão',
-        description: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
-        variant: 'destructive',
+        title: "Erro de conexão",
+        description: "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.",
+        variant: "destructive",
       });
     }
   };
@@ -140,6 +143,9 @@ const Index = () => {
   };
 
   const renderContent = () => {
+    if (isQuizCompleted) { // Renderiza a página de conclusão se o quiz estiver completo
+      return <QuizCompletion />;
+    }
     if (currentSlide === 0) {
       return <QuizIntro onStart={handleNext} />;
     }
@@ -179,7 +185,7 @@ const Index = () => {
         {renderContent()}
       </div>
 
-      {currentSlide > 0 && (
+      {currentSlide > 0 && !isQuizCompleted && ( // Não renderiza a navegação se o quiz estiver completo
         <QuizNavigation
           currentSlide={currentSlide}
           totalSlides={totalSlides}
@@ -194,3 +200,5 @@ const Index = () => {
 };
 
 export default Index;
+
+
