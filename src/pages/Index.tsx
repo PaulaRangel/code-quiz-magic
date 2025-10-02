@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { z } from "zod";
 import { quizData } from "@/data/quizData";
 import { QuizIntro } from "@/components/QuizIntro";
 import { QuizQuestion } from "@/components/QuizQuestion";
@@ -97,7 +98,7 @@ const Index = () => {
       const url = 'https://automacao.rangelpower.com/webhook-test/quiz-more-analytics';
 
       // Garante iframe de destino para o POST cross-origin
-      let iframe = document.querySelector('iframe[name="webhook_iframe"]'). as HTMLIFrameElement | null;
+      let iframe = document.querySelector('iframe[name="webhook_iframe"]') as HTMLIFrameElement | null;
       if (!iframe) {
         iframe = document.createElement('iframe');
         iframe.name = 'webhook_iframe';
