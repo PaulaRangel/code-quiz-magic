@@ -67,7 +67,7 @@ const Index = () => {
 
     try {
       // Substitua pela URL real do webhook
-      const response = await fetch('SUA_URL_WEBHOOK_N8N_AQUI', {
+      const response = await fetch('https://webhook.automacao.rangelpower.com/webhook/quiz-more-analytics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
