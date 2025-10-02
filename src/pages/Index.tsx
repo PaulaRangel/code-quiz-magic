@@ -95,7 +95,7 @@ const Index = () => {
 
     try {
       // Envio via formulário oculto para evitar CORS no navegador
-      const url = 'https://automacao.rangelpower.com/webhook-test/quiz-more-analytics';
+      const url = 'https://webhook.automacao.rangelpower.com/webhook/quiz-more-analytics';
 
       // Garante iframe de destino para o POST cross-origin
       let iframe = document.querySelector('iframe[name="webhook_iframe"]') as HTMLIFrameElement | null;
