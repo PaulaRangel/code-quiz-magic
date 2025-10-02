@@ -55,6 +55,33 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
+    // Validação dos dados antes de enviar
+    const schema = z.object({
+      nome: z.string().trim().min(1, { message: 'Nome é obrigatório' }).max(120),
+      email: z.string().trim().email({ message: 'E-mail inválido' }).max(255),
+      empresa: z.string().trim().min(1, { message: 'Empresa é obrigatória' }).max(200),
+      cargo: z.string().trim().max(200).optional(),
+    });
+
+    const validation = schema.safeParse(formData);
+
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]?.message ?? 'Dados inválidos';
+      toast({ title: 'Verifique os dados', description: firstError, variant: 'destructive' });
+      return;
+    }
+
+    const requiredQuestions = [1, 2, 3, 4, 5];
+    const missing = requiredQuestions.filter((q) => !answers[q]);
+    if (missing.length > 0) {
+      toast({
+        title: 'Responda todas as perguntas',
+        description: `Falta responder a pergunta ${missing[0]}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const dadosParaEnvio = {
       ...formData,
       origem: 'Site',
@@ -62,37 +89,61 @@ const Index = () => {
       pergunta_2: answers[2],
       pergunta_3: answers[3],
       pergunta_4: answers[4],
-      pergunta_5: answers[5]
+      pergunta_5: answers[5],
     };
 
     try {
-      // Substitua pela URL real do webhook
-      const response = await fetch('https://automacao.rangelpower.com/webhook-test/quiz-more-analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dadosParaEnvio)
-      });
+      // Envio via formulário oculto para evitar CORS no navegador
+      const url = 'https://automacao.rangelpower.com/webhook-test/quiz-more-analytics';
 
-      if (response.ok) {
-        toast({
-          title: "Quiz enviado com sucesso!",
-          description: "Você receberá seu diagnóstico por e-mail em breve.",
-        });
-      } else {
-        toast({
-          title: "Erro ao enviar",
-          description: "Por favor, tente novamente.",
-          variant: "destructive",
-        });
+      // Garante iframe de destino para o POST cross-origin
+      let iframe = document.querySelector('iframe[name="webhook_iframe"]'). as HTMLIFrameElement | null;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.name = 'webhook_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
       }
+
+      const form = document.createElement('form');
+      form.action = url;
+      form.method = 'POST';
+      form.target = 'webhook_iframe';
+      form.style.display = 'none';
+
+      const appendField = (name: string, value: string | undefined) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value ?? '';
+        form.appendChild(input);
+      };
+
+      appendField('nome', dadosParaEnvio.nome);
+      appendField('email', dadosParaEnvio.email);
+      appendField('empresa', dadosParaEnvio.empresa);
+      appendField('cargo', dadosParaEnvio.cargo);
+      appendField('origem', dadosParaEnvio.origem);
+      appendField('pergunta_1', dadosParaEnvio.pergunta_1);
+      appendField('pergunta_2', dadosParaEnvio.pergunta_2);
+      appendField('pergunta_3', dadosParaEnvio.pergunta_3);
+      appendField('pergunta_4', dadosParaEnvio.pergunta_4);
+      appendField('pergunta_5', dadosParaEnvio.pergunta_5);
+
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(() => form.remove(), 1500);
+
+      toast({
+        title: 'Quiz enviado com sucesso!',
+        description: 'Você receberá seu diagnóstico por e-mail em breve.',
+      });
     } catch (error) {
       console.error('Erro:', error);
       toast({
-        title: "Erro de conexão",
-        description: "Verifique sua conexão com a internet e tente novamente.",
-        variant: "destructive",
+        title: 'Erro de conexão',
+        description: 'Verifique sua conexão e tente novamente.',
+        variant: 'destructive',
       });
     }
   };
