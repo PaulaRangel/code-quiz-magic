@@ -93,57 +93,36 @@ const Index = () => {
       pergunta_5: answers[5],
     };
 
+    const webhookUrl = 'https://webhook.automacao.rangelpower.com/webhook/quiz-more-analytics';
+
     try {
-      // Envio via formulário oculto para evitar CORS no navegador
-      const url = 'https://webhook.automacao.rangelpower.com/webhook/quiz-more-analytics';
-
-      // Garante iframe de destino para o POST cross-origin
-      let iframe = document.querySelector('iframe[name="webhook_iframe"]') as HTMLIFrameElement | null;
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.name = 'webhook_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-
-      const form = document.createElement('form');
-      form.action = url;
-      form.method = 'POST';
-      form.target = 'webhook_iframe';
-      form.style.display = 'none';
-
-      const appendField = (name: string, value: string | undefined) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value ?? '';
-        form.appendChild(input);
-      };
-
-      appendField('nome', dadosParaEnvio.nome);
-      appendField('email', dadosParaEnvio.email);
-      appendField('empresa', dadosParaEnvio.empresa);
-      appendField('cargo', dadosParaEnvio.cargo);
-      appendField('origem', dadosParaEnvio.origem);
-      appendField('pergunta_1', dadosParaEnvio.pergunta_1);
-      appendField('pergunta_2', dadosParaEnvio.pergunta_2);
-      appendField('pergunta_3', dadosParaEnvio.pergunta_3);
-      appendField('pergunta_4', dadosParaEnvio.pergunta_4);
-      appendField('pergunta_5', dadosParaEnvio.pergunta_5);
-
-      document.body.appendChild(form);
-      form.submit();
-      setTimeout(() => form.remove(), 1500);
-
-      toast({
-        title: 'Quiz enviado com sucesso!',
-        description: 'Você receberá seu diagnóstico por e-mail em breve.',
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosParaEnvio)
       });
+
+      if (response.ok) {
+        toast({
+          title: 'Quiz enviado com sucesso!',
+          description: 'Você receberá seu diagnóstico por e-mail em breve.',
+        });
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+        console.error('Erro na resposta do webhook:', response.status, errorData);
+        toast({
+          title: 'Erro ao enviar o quiz',
+          description: `Ocorreu um problema no servidor: ${errorData.message || response.statusText}.`, 
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Erro de rede ao tentar enviar para o webhook:', error);
       toast({
         title: 'Erro de conexão',
-        description: 'Verifique sua conexão e tente novamente.',
+        description: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
         variant: 'destructive',
       });
     }
